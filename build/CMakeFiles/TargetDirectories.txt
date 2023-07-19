@@ -1,0 +1,16 @@
+/Users/juanbraun/dev/ST_project/build/CMakeFiles/markov-lib.dir
+/Users/juanbraun/dev/ST_project/build/CMakeFiles/markov-expts.dir
+/Users/juanbraun/dev/ST_project/build/CMakeFiles/midi-markov-v1.dir
+/Users/juanbraun/dev/ST_project/build/CMakeFiles/midi-markov-v1_All.dir
+/Users/juanbraun/dev/ST_project/build/CMakeFiles/midi-markov-v1_Standalone.dir
+/Users/juanbraun/dev/ST_project/build/CMakeFiles/midi-markov-v1_AU.dir
+/Users/juanbraun/dev/ST_project/build/CMakeFiles/midi-markov-v1_VST3.dir
+/Users/juanbraun/dev/ST_project/build/CMakeFiles/install.dir
+/Users/juanbraun/dev/ST_project/build/CMakeFiles/ALL_BUILD.dir
+/Users/juanbraun/dev/ST_project/build/CMakeFiles/ZERO_CHECK.dir
+/Users/juanbraun/dev/ST_project/build/JUCE/CMakeFiles/install.dir
+/Users/juanbraun/dev/ST_project/build/JUCE/CMakeFiles/ALL_BUILD.dir
+/Users/juanbraun/dev/ST_project/build/JUCE/CMakeFiles/ZERO_CHECK.dir
+/Users/juanbraun/dev/ST_project/build/JUCE/modules/CMakeFiles/install.dir
+/Users/juanbraun/dev/ST_project/build/JUCE/extras/Build/CMakeFiles/install.dir
+/Users/juanbraun/dev/ST_project/build/JUCE/extras/Build/juceaide/CMakeFiles/install.dir

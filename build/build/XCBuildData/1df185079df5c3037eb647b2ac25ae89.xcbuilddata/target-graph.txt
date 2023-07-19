@@ -1,0 +1,7 @@
+Target dependency graph (3 targets)
+ZERO_CHECK in midi-markov-v1, no dependencies
+midi-markov-v1 in midi-markov-v1, depends on:
+ZERO_CHECK in midi-markov-v1 (explicit)
+midi-markov-v1_VST3 in midi-markov-v1, depends on:
+midi-markov-v1 in midi-markov-v1 (explicit)
+ZERO_CHECK in midi-markov-v1 (explicit)
