@@ -21,7 +21,7 @@ MidiMarkovProcessor::MidiMarkovProcessor()
                      #endif
                        )
 #endif
-, markovModel{}, listener()
+, markovModel{}, conductor()
 {
 
 }
@@ -96,7 +96,7 @@ void MidiMarkovProcessor::changeProgramName (int index, const juce::String& newN
 //==============================================================================
 void MidiMarkovProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-
+    start_time = juce::Time().getMillisecondCounterHiRes() * 0.001;
 }
 
 void MidiMarkovProcessor::releaseResources()
@@ -140,36 +140,46 @@ void MidiMarkovProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     // clear pending - these messages come from the addMidi function
     // which the UI might call to send notes from the piano widget
     
+
+    
     if (midiToProcess.getNumEvents() > 0){
-      midiMessages.addEvents(midiToProcess, midiToProcess.getFirstEventTime(), midiToProcess.getLastEventTime()+1, 0);
-      midiToProcess.clear();
+        midiMessages.addEvents(midiToProcess, midiToProcess.getFirstEventTime(), midiToProcess.getLastEventTime()+1, 0);
+        midiToProcess.clear();
     }
 
     juce::MidiBuffer generatedMessages{};
 
     for (const auto metadata : midiMessages){
-      auto message = metadata.getMessage();
-      if (message.isNoteOn()){
         
-          std::cout << message.getTimeStamp() << std::endl;
-          listener.add_noteOn(message.getNoteNumber(), message.getVelocity(),juce::Time::getMillisecondCounter() * 0.001);
-
+        auto message = metadata.getMessage();
+        juce::AudioPlayHead::CurrentPositionInfo position_info;
+        if (auto* playHead = getPlayHead()){
+            playHead->getCurrentPosition(position_info);
+        }
+        if (message.isNoteOn()){
+            
+            //std::cout << "timeSamp: " << message.getTimeStamp() << std::endl;
+            conductor.addNoteOn(message.getNoteNumber(), message.getVelocity(),position_info.ppqPosition);
+        }
+        if (message.isNoteOff()){
+            
+            conductor.addNoteOff(message.getNoteNumber(),position_info.ppqPosition);
+            //listener.printSize();
+            std::string state = conductor.generateEvent(message.getNoteNumber());
+            markovModel.putEvent(state);
+            std::cout << state << std::endl;
+        }
+        if (position_info.ppqPositionOfLastBarStart > 4){
+            int note = std::stoi(markovModel.getEvent(true)); //  true means it only selects from states having at least 2 observations
+            
+            std::cout << "release: mark note " << note << " order " << markovModel.getOrderOfLastEvent()<< std::endl;
+            
+            juce::MidiMessage nOn = juce::MidiMessage::noteOn(1, note, 0.5f);
+            generatedMessages.addEvent(nOn, 0);
+            juce::MidiMessage nOff = juce::MidiMessage::noteOff(1, note, 0.5f);
+            generatedMessages.addEvent(nOff, buffer.getNumSamples()-1);
+        }
         
-         markovModel.putEvent(std::to_string(message.getNoteNumber()));
-        
-      }
-      if (message.isNoteOff()){
-         
-          listener.add_noteOff(message.getNoteNumber(), juce::Time::getMillisecondCounter() * 0.001);
-          //listener.printSize();
-          int note = std::stoi(markovModel.getEvent(true)); //  true means it only selects from states having at least 2 observations
-         std::cout << "release: mark note " << note << " order " << markovModel.getOrderOfLastEvent()<< std::endl;
-         juce::MidiMessage nOn = juce::MidiMessage::noteOn(1, note, 0.5f);
-         generatedMessages.addEvent(nOn, 0);
-         juce::MidiMessage nOff = juce::MidiMessage::noteOff(1, note, 0.5f);
-         generatedMessages.addEvent(nOff, buffer.getNumSamples()-1);
-        
-      }
     }
     // optionally wipe out the original messsages
     

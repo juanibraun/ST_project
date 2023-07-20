@@ -11,7 +11,7 @@
 // #include <JuceHeader.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "MarkovManager.h"
-#include "Listener.hpp"
+#include "Conductor.h"
 
 
 //==============================================================================
@@ -65,7 +65,8 @@ public:
 private:
 
     MarkovManager markovModel;
-    Listener listener;
+    Conductor conductor;
+    double start_time;
     /** stores messages added from the addMidi function*/
     juce::MidiBuffer midiToProcess;
 
