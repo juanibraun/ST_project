@@ -67,8 +67,11 @@ private:
     MarkovManager markovModel;
     Conductor conductor;
     double start_time;
+    int position;
     /** stores messages added from the addMidi function*/
     juce::MidiBuffer midiToProcess;
+    
+    
 
 
       //==============================================================================

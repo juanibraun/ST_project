@@ -19,7 +19,7 @@ struct note {
     double start;
     double duration;
 } ;
-typedef std::list <note> single_note_list;
+
 
 #endif
 
@@ -33,12 +33,16 @@ public:
     
     void printSize();
     
-    std::string generateEvent(int n);
+    void clearNotes();
+    
+    std::string generateEvent();
     
     note readEvent(std::string &event);
     
+    bool availableEvents();
     
 private:
-    single_note_list notes[127];
+    std::list <note> * played_notes;
+    std::list<note>::iterator position;
     
 };

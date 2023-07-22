@@ -96,13 +96,14 @@ void MidiMarkovProcessor::changeProgramName (int index, const juce::String& newN
 //==============================================================================
 void MidiMarkovProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    start_time = juce::Time().getMillisecondCounterHiRes() * 0.001;
+    position = 0;
 }
 
 void MidiMarkovProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    conductor.clearNotes();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -146,51 +147,60 @@ void MidiMarkovProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         midiMessages.addEvents(midiToProcess, midiToProcess.getFirstEventTime(), midiToProcess.getLastEventTime()+1, 0);
         midiToProcess.clear();
     }
-
+    
+    juce::AudioPlayHead::CurrentPositionInfo position_info;
+    if (auto* playHead = getPlayHead()){
+        playHead->getCurrentPosition(position_info);
+    }
+    
     juce::MidiBuffer generatedMessages{};
 
     for (const auto metadata : midiMessages){
         
         auto message = metadata.getMessage();
-        juce::AudioPlayHead::CurrentPositionInfo position_info;
-        if (auto* playHead = getPlayHead()){
-            playHead->getCurrentPosition(position_info);
-        }
+      
         if (message.isNoteOn()){
             
             //std::cout << "timeSamp: " << message.getTimeStamp() << std::endl;
-            conductor.addNoteOn(message.getNoteNumber(), message.getVelocity(),position_info.ppqPosition);
+            conductor.addNoteOn(message.getNoteNumber(), message.getVelocity(),position_info.timeInSeconds);
         }
         if (message.isNoteOff()){
             
-            conductor.addNoteOff(message.getNoteNumber(),position_info.ppqPosition);
+            conductor.addNoteOff(message.getNoteNumber(),position_info.timeInSeconds);
             //listener.printSize();
-            std::string state = conductor.generateEvent(message.getNoteNumber());
-            markovModel.putEvent(state);
-            std::cout << state << std::endl;
+            //std::string state = conductor.generateEvent();
+            //markovModel.putEvent(state);
+            //std::cout << state << std::endl;
         }
-        if (position_info.ppqPositionOfLastBarStart > 4){
-            int note = std::stoi(markovModel.getEvent(true)); //  true means it only selects from states having at least 2 observations
-            
-            std::cout << "release: mark note " << note << " order " << markovModel.getOrderOfLastEvent()<< std::endl;
-            
-            juce::MidiMessage nOn = juce::MidiMessage::noteOn(1, note, 0.5f);
-            generatedMessages.addEvent(nOn, 0);
-            juce::MidiMessage nOff = juce::MidiMessage::noteOff(1, note, 0.5f);
-            generatedMessages.addEvent(nOff, buffer.getNumSamples()-1);
-        }
+
         
     }
     // optionally wipe out the original messsages
-    
+    if (position_info.ppqPosition >= 10){
+        while (conductor.availableEvents()){
+            
+            
+            std::string event = conductor.generateEvent();
+            
+            //std::string event = markovModel.getEvent(true); //  true means it only selects from states having at least 2 observations
+            
+            //std::cout << "release: mark note " << event << " order " << markovModel.getOrderOfLastEvent()<< std::endl;
+            
+            note n = conductor.readEvent(event);
+            
+            std::cout<< "Read Event: "<<  n.note << "," << n.velocity << "," << n.start + position_info.timeInSeconds << "," << n.duration << std::endl;
+            
+            juce::MidiMessage nOn = juce::MidiMessage::noteOn(1, n.note, (uint8_t)n.velocity);
+            generatedMessages.addEvent(nOn, (n.start + position_info.timeInSeconds) * getSampleRate());
+            
+            juce::MidiMessage nOff = juce::MidiMessage::noteOff(1, n.note, (uint8_t)n.velocity);
+            generatedMessages.addEvent(nOff,n.start + position_info.timeInSamples + n.duration);
+        }
+    }
     midiMessages.clear();
-    
+    //std::cout << generatedMessages.getFirstEventTime() << std::endl;
     midiMessages.addEvents(generatedMessages, generatedMessages.getFirstEventTime(), -1, 0);
-
-  
- 
 }
-
 //==============================================================================
 bool MidiMarkovProcessor::hasEditor() const
 {
@@ -226,7 +236,8 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 void MidiMarkovProcessor::addMidi(juce::MidiMessage msg, int sampleOffset)
 {
-  midiToProcess.addEvent(msg, sampleOffset);
+  
+    midiToProcess.addEvent(msg, sampleOffset);
 }
 
 
