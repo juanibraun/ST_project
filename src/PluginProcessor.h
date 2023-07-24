@@ -8,7 +8,7 @@
 
 #pragma once
 
-// #include <JuceHeader.h>
+#include <JuceHeader.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "MarkovManager.h"
 #include "Conductor.h"
@@ -18,9 +18,9 @@
 /**
 */
 class MidiMarkovProcessor  : public juce::AudioProcessor
-                            #if JucePlugin_Enable_ARA
-                             , public juce::AudioProcessorARAExtension
-                            #endif
+                                #if JucePlugin_Enable_ARA
+                                    , public juce::AudioProcessorARAExtension
+                                #endif
 {
 public:
     //==============================================================================
@@ -61,15 +61,24 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     /** add some midi to be played at the sent sample offset*/
     void addMidi(juce::MidiMessage msg, int sampleOffset);
+    
+    void setOffset(double ofs);
+    void setDuration(double dur);
+    
 
 private:
 
     MarkovManager markovModel;
     Conductor conductor;
-    double start_time;
-    int position;
     /** stores messages added from the addMidi function*/
     juce::MidiBuffer midiToProcess;
+    
+    juce::MidiBuffer generatedMessages;
+    
+    double sample_rate;
+    double offset;
+    double duration;
+
     
     
 

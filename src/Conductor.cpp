@@ -11,8 +11,15 @@
 
 Conductor::Conductor(){
     
-    played_notes = new std::list <note>;
-    position = played_notes->begin();
+    /*note n;
+    n.duration = 0;
+    n.start = 0;
+    n.note = 0;
+    n.velocity = 0;*/
+    
+    
+    
+    loop_count = 0;
     
 }
 
@@ -22,19 +29,19 @@ void Conductor::addNoteOn(int noteNumber, int vel, double start){
     new_note.note = noteNumber;
     new_note.start = start;
     new_note.velocity = vel;
+    new_note.duration = 0;
     
-    played_notes->push_back (new_note);
-    //std::cout << "new_note: " << noteNumber << " velocity: " << notes.front().velocity << " start: " << notes.front().start << std::endl;
+    played_notes.push_back(new_note);
+    
+    //std::cout << "new_note: " << noteNumber << " velocity: " << played_notes->front().velocity << " start: " << played_notes->front().start << std::endl;
+    //std::advance(notes_buffer_position, 1);
     
 }
 
 void Conductor::addNoteOff(int noteNumber, double finish){
-    auto it = played_notes->end();
-     int i = 1;
+    auto it = played_notes.end();
     do{
-        std::advance(it, -i);
-        i--;
-        //std::cout << "note in it: "<< it->note << std::endl;
+        --it;
     }
     while (it->note != noteNumber);
     it->duration = finish - it->start;
@@ -47,25 +54,36 @@ void Conductor::addNoteOff(int noteNumber, double finish){
 void Conductor::printSize(){
     
     for (int i = 0; i<128; i++){
-        std::cout << "note: " << i << " size: " << this->played_notes->size() << std::endl;
+        std::cout << "note: " << i << " size: " << this->played_notes.size() << std::endl;
     }
     
 }
 
 void Conductor::clearNotes(){
-    played_notes->clear();
+    played_notes.clear();
 }
 std::string Conductor::generateEvent(){
     
-  
-    note current_note = *position;
-    std::advance(position, 1);
+    note current_note = played_notes.front();
+    played_notes.pop_front();
     
-    if(position == played_notes->end()) {
     
-        position = played_notes->begin();
+    /*
+    if(notes_buffer_position == played_notes->end()) {
+        
+        
+        current_note.duration = 0;
+        current_note.start = 0;
+        current_note.note = 0;
+        current_note.velocity = 0;
+         
+        
+        notes_buffer_position = played_notes->begin();
+        loop_count++;
+        time_offset = (1 + loop_count) * time_offset ;
         std::cout << "reset position "<< std::endl;
     }
+    */
     
     
     return std::to_string(current_note.note) + "," + std::to_string(current_note.velocity) + "," + std::to_string(current_note.start) + "," + std::to_string(current_note.duration);
@@ -101,7 +119,15 @@ note Conductor::readEvent(std::string &event){
 }
 
 bool Conductor::availableEvents(){
-    return (played_notes->size() > 0) && (played_notes->back().duration > 0.001);
+    return (played_notes.size()>0 and played_notes.front().duration != 0);
+}
+
+int Conductor::getTimeOffset(){
+    return time_offset;
+}
+
+void Conductor::setTimeOffset(int ofs){
+    time_offset = ofs;
 }
 
 

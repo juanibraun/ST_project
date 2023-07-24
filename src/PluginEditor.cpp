@@ -11,19 +11,36 @@
 
 //==============================================================================
 MidiMarkovEditor::MidiMarkovEditor (MidiMarkovProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p), 
-    miniPianoKbd{kbdState, juce::MidiKeyboardComponent::horizontalKeyboard} 
+: AudioProcessorEditor (&p), miniPianoKbd{kbdState, juce::MidiKeyboardComponent::horizontalKeyboard},
+audioProcessor (p)
 
 {    
 
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (700, 350);
+    setSize (700, 450);
 
     // listen to the mini piano
     kbdState.addListener(this);  
     addAndMakeVisible(miniPianoKbd);
+    
+    addAndMakeVisible(offset_slider);
+    offset_slider.setRange(0,12,1);
+    offset_slider.setValue(4);
+    offset_slider.setTextValueSuffix (" quarters");
+    offset_slider.addListener(this);
+    addAndMakeVisible (offset_label);
+    offset_label.setText ("Offset", juce::dontSendNotification);
+    offset_label.attachToComponent (&offset_slider, false);
+    
+    addAndMakeVisible(duration_slider);
+    duration_slider.setRange(0,2,0.125);
+    duration_slider.setTextValueSuffix (" times");
+    duration_slider.addListener(this);
+    addAndMakeVisible (duration_label);
+    duration_label.setText ("Duration", juce::dontSendNotification);
+    duration_label.attachToComponent (&duration_slider, false);
 
 }
 
@@ -35,7 +52,9 @@ MidiMarkovEditor::~MidiMarkovEditor()
 void MidiMarkovEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    background = juce::ImageCache::getFromMemory(BinaryData::background_jpg,BinaryData::background_jpgSize);
+   
+    g.drawImageWithin(background, 0, 0, getWidth(), getHeight(), juce::RectanglePlacement::stretchToFit);
 
    // g.setColour (juce::Colours::white);
    // g.setFont (15.0f);
@@ -46,18 +65,28 @@ void MidiMarkovEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
-    float rowHeight = getHeight()/5; 
-    float colWidth = getWidth() / 3;
-    float row = 0;
+    float rowHeight = getHeight()/5;
+    
+    auto sliderRight = 200;
+    //offset_slider.setBounds (sliderLeft, 20, getWidth() - sliderLeft - 10, 20);
+    offset_slider.setBounds(getWidth() - sliderRight, getHeight() - 2 * rowHeight, getWidth()/4, 20);
+    duration_slider.setBounds (getWidth() - sliderRight, getHeight() - 2 * rowHeight + 50,  getWidth()/4, 20);
 
-
-    miniPianoKbd.setBounds(0, rowHeight*row, getWidth(), rowHeight);
+    miniPianoKbd.setBounds(0,getHeight()-rowHeight, getWidth(), rowHeight);
     
 }
 
  void MidiMarkovEditor::sliderValueChanged (juce::Slider *slider)
 {
+     if (slider == &offset_slider){
+         audioProcessor.setOffset(offset_slider.getValue());
+         
+     }
 
+     else if (slider == &duration_slider){
+         audioProcessor.setDuration(duration_slider.getValue());
+     }
+                
 }
 
 void MidiMarkovEditor::buttonClicked(juce::Button* btn)

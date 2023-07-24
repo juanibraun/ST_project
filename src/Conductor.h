@@ -41,8 +41,17 @@ public:
     
     bool availableEvents();
     
+    int getTimeOffset();
+    
+    void setTimeOffset(int ofs);
+    
 private:
-    std::list <note> * played_notes;
-    std::list<note>::iterator position;
+    std::list <note> played_notes;
+    
+    std::list<note>::iterator write_itr;
+    std::list<note>::iterator read_itr;
+    
+    int time_offset;
+    int loop_count;
     
 };

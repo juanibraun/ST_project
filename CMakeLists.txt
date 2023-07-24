@@ -33,6 +33,9 @@ juce_add_plugin(midi-canon-v1
     PRODUCT_NAME "midi-canon-v1")        # The name of the final executable, which can differ from the target name
 
 # you can do this since we are not using torch any more
+
+juce_add_binary_data(Assets SOURCES ./assets/background.jpg)
+
 juce_generate_juce_header(midi-canon-v1)
 
 
@@ -43,6 +46,11 @@ target_sources(midi-canon-v1
     src/MarkovManager.cpp  
     src/MarkovChain.cpp
     src/Conductor.cpp
+    src/PluginEditor.h
+    src/PluginProcessor.h
+    src/MarkovManager.h  
+    src/MarkovChain.h
+    src/Conductor.h
    )
 
 
@@ -63,6 +71,7 @@ target_compile_definitions(midi-canon-v1
 
 target_link_libraries(midi-canon-v1
     PRIVATE
+	Assets
         juce::juce_audio_utils
     PUBLIC
         juce::juce_recommended_config_flags
