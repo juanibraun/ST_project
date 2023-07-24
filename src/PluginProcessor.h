@@ -65,16 +65,20 @@ public:
     void setOffset(double ofs);
     void setDuration(double dur);
     
+    void markov_on_off(bool state);
+    
 
 private:
 
-    MarkovManager markovModel;
+    MarkovManager markovModel_notes;
+    MarkovManager markovModel_triggers;
     Conductor conductor;
     /** stores messages added from the addMidi function*/
     juce::MidiBuffer midiToProcess;
     
     juce::MidiBuffer generatedMessages;
     
+    bool markov;
     double sample_rate;
     double offset;
     double duration;

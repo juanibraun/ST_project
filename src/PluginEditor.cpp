@@ -36,11 +36,19 @@ audioProcessor (p)
     
     addAndMakeVisible(duration_slider);
     duration_slider.setRange(0,2,0.125);
+    duration_slider.setValue(1);
     duration_slider.setTextValueSuffix (" times");
     duration_slider.addListener(this);
     addAndMakeVisible (duration_label);
     duration_label.setText ("Duration", juce::dontSendNotification);
     duration_label.attachToComponent (&duration_slider, false);
+    
+    addAndMakeVisible(markov_on_off);
+    markov_on_off.setClickingTogglesState(true);
+    markov_on_off.onClick = [this] { updateToggleState(&markov_on_off);};
+    addAndMakeVisible(markov_on_off_label);
+    markov_on_off_label.setText ("Markov OFF", juce::dontSendNotification);
+    markov_on_off_label.attachToComponent (&markov_on_off, false);
 
 }
 
@@ -68,10 +76,13 @@ void MidiMarkovEditor::resized()
     float rowHeight = getHeight()/5;
     
     auto sliderRight = 200;
+    auto btnLeft = 50;
     //offset_slider.setBounds (sliderLeft, 20, getWidth() - sliderLeft - 10, 20);
     offset_slider.setBounds(getWidth() - sliderRight, getHeight() - 2 * rowHeight, getWidth()/4, 20);
     duration_slider.setBounds (getWidth() - sliderRight, getHeight() - 2 * rowHeight + 50,  getWidth()/4, 20);
 
+    markov_on_off.setBounds(btnLeft/2, rowHeight/2, 2*btnLeft, 20);
+    
     miniPianoKbd.setBounds(0,getHeight()-rowHeight, getWidth(), rowHeight);
     
 }
@@ -91,7 +102,6 @@ void MidiMarkovEditor::resized()
 
 void MidiMarkovEditor::buttonClicked(juce::Button* btn)
 {
-
 }
 
 void MidiMarkovEditor::handleNoteOn(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber, float velocity)
@@ -108,3 +118,12 @@ void MidiMarkovEditor::handleNoteOff(juce::MidiKeyboardState *source, int midiCh
 }
 
 
+void MidiMarkovEditor::updateToggleState (juce::Button* button){
+    audioProcessor.markov_on_off(button->getToggleState());
+    std::cout << button->getToggleState() << std::endl;
+    if(button->getToggleState()){
+        markov_on_off_label.setText ("Markov ON", juce::dontSendNotification);
+    }else{
+        markov_on_off_label.setText ("Markov OFF", juce::dontSendNotification);
+    }
+}

@@ -20,6 +20,9 @@ struct note {
     double duration;
 } ;
 
+struct splitted_event {
+    std::string note, trigger;
+};
 
 #endif
 
@@ -37,6 +40,8 @@ public:
     
     std::string generateEvent();
     
+    splitted_event generateSplittedEvent();
+    
     note readEvent(std::string &event);
     
     bool availableEvents();
@@ -45,13 +50,15 @@ public:
     
     void setTimeOffset(int ofs);
     
+    void setDuration(double dur);
+    
 private:
     std::list <note> played_notes;
-    
-    std::list<note>::iterator write_itr;
-    std::list<note>::iterator read_itr;
+
+    int read_count;
+    int write_count;
     
     int time_offset;
-    int loop_count;
+    double dur_coeff;
     
 };

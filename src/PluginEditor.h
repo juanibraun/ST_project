@@ -42,6 +42,7 @@ public:
  velocity) override; 
      // from MidiKeyboardState
     void handleNoteOff(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber, float velocity) override;
+    void updateToggleState (juce::Button* button);
     
 
 
@@ -56,6 +57,8 @@ private:
     juce::Label offset_label;
     juce::Slider duration_slider;
     juce::Label duration_label;
+    juce::ToggleButton markov_on_off;
+    juce::Label markov_on_off_label;
 
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.

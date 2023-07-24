@@ -21,7 +21,7 @@ MidiMarkovProcessor::MidiMarkovProcessor()
                      #endif
                        )
 #endif
-, markovModel{}, conductor()
+, markovModel_notes{}, markovModel_triggers(), conductor()
 {
 
 }
@@ -98,8 +98,8 @@ void MidiMarkovProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
 
     sample_rate = sampleRate;
-    generatedMessages.clear();
     conductor.setTimeOffset(4);
+    conductor.setDuration(1);
      
     
 }
@@ -159,6 +159,9 @@ void MidiMarkovProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     if (auto* playHead = getPlayHead()){
         playHead->getCurrentPosition(position_info);
     }
+    if (!position_info.isPlaying){
+        conductor.clearNotes();
+    }
     
     // Read incoming MIDI buffer and add notes to conductor
     // /*
@@ -170,52 +173,83 @@ void MidiMarkovProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         }
         if (message.isNoteOff()){
             conductor.addNoteOff(message.getNoteNumber(),position_info.timeInSeconds);
-            //std::cout << message.getDescription() << std::endl;
-            //listener.printSize();
-            //std::string state = conductor.generateEvent();
-            //markovModel.putEvent(state);
-            //std::cout << state << std::endl;
         }
     }
     
     midiMessages.clear(); // Clear the midi buffer bc already copied input notes to conductor
-
     
-    // compute sample after which conductor must start generating events
-    int sample_offset = (int)(60 / position_info.bpm * conductor.getTimeOffset() * sample_rate);
-    
-    if ( (false) ){
-        std::cout << "starting time: " << (float)(60 / position_info.bpm * conductor.getTimeOffset()) << std::endl;
+    if(markov){
+        if (conductor.availableEvents()){
+            splitted_event event = conductor.generateSplittedEvent();
+            markovModel_notes.putEvent(event.note);
+            markovModel_triggers.putEvent(event.trigger);
+        }
         
-        std::cout << "sample offset: "<< sample_offset << ", current position: "<< position_info.timeInSamples << std::endl;
-    }
-    
-    if (position_info.timeInSamples > sample_offset)
-    {
-        // Check if conductor has something to play
-         if (conductor.availableEvents()){
+        int sample_offset = (int)(60 / position_info.bpm * conductor.getTimeOffset() * sample_rate);
+        
+        if ( (false) ){
+            std::cout << "starting time: " << (float)(60 / position_info.bpm * conductor.getTimeOffset()) << std::endl;
             
-             std::string event = conductor.generateEvent();
+            std::cout << "sample offset: "<< sample_offset << ", current position: "<< position_info.timeInSamples << std::endl;
+        }
+        
+        if (position_info.timeInSamples > sample_offset)
+        {
+            // Check if conductor has something to play
+            std::string markov_event = markovModel_notes.getEvent(true);
+            std::cout << "release: mark note " << markov_event << " order " << markovModel_notes.getOrderOfLastEvent()<< std::endl;
             
-            note n = conductor.readEvent(event);
-            
+            note n = conductor.readEvent(markov_event);
+            n.start = std::stod(markovModel_triggers.getEvent(true)); 
+                
             juce::MidiMessage nOn = juce::MidiMessage::noteOn(1, n.note, (uint8_t)n.velocity);
             auto sampleNumber =  (int) (sample_offset + (n.start) * sample_rate);
             generatedMessages.addEvent(nOn,sampleNumber);
-            
+                 
             juce::MidiMessage nOff = juce::MidiMessage::noteOff(1, n.note, (uint8_t)n.velocity);
             sampleNumber =  (int) (sample_offset + (n.start + n.duration) * sample_rate);
             generatedMessages.addEvent(nOff,sampleNumber);
+
+            
+            // //  true means it only selects from states having at least 2 observations
+            
+            //std::cout << "release: mark note " << event << " order " << markovModel.getOrderOfLastEvent()<< std::endl;
+            
+            //std::cout<< "Read Event: "<<  n.note << "," << n.velocity << "," << n.start + position_info.timeInSeconds << "," << n.duration << std::endl;
+            
+        }
+    }else{
+
+        int sample_offset = (int)(60 / position_info.bpm * conductor.getTimeOffset() * sample_rate);
+        
+        if ( (false) ){
+            std::cout << "starting time: " << (float)(60 / position_info.bpm * conductor.getTimeOffset()) << std::endl;
+            
+            std::cout << "sample offset: "<< sample_offset << ", current position: "<< position_info.timeInSamples << std::endl;
         }
         
-        //std::string event = markovModel.getEvent(true); //  true means it only selects from states having at least 2 observations
-        
-        //std::cout << "release: mark note " << event << " order " << markovModel.getOrderOfLastEvent()<< std::endl;
-        
-        //std::cout<< "Read Event: "<<  n.note << "," << n.velocity << "," << n.start + position_info.timeInSeconds << "," << n.duration << std::endl;
-        
+        if (position_info.timeInSamples > sample_offset)
+        {
+            // Check if conductor has something to play
+            if (conductor.availableEvents()){
+                std::string event = conductor.generateEvent();
+                
+                note n = conductor.readEvent(event);
+                
+                juce::MidiMessage nOn = juce::MidiMessage::noteOn(1, n.note, (uint8_t)n.velocity);
+                auto sampleNumber =  (int) (sample_offset + (n.start) * sample_rate);
+                generatedMessages.addEvent(nOn,sampleNumber);
+                
+                juce::MidiMessage nOff = juce::MidiMessage::noteOff(1, n.note, (uint8_t)n.velocity);
+                sampleNumber =  (int) (sample_offset + (n.start + n.duration) * sample_rate);
+                generatedMessages.addEvent(nOff,sampleNumber);
+            }
+        }
     }
-    // */
+    
+
+    
+
     
     // Dummy version - copy from one buffer to the other while delaying
     /*
@@ -243,6 +277,7 @@ void MidiMarkovProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     */
     
     // Add messages to midiBuffer whose sample value is whithin the current buffer
+    
     for (const auto metadata : generatedMessages){
         if ( (false) ){
             std::cout << metadata.getMessage().getDescription() << " Sample position: " << metadata.samplePosition << std::endl;
@@ -252,11 +287,18 @@ void MidiMarkovProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                     break;
         auto message = metadata.getMessage();
         midiMessages.addEvent(message,metadata.samplePosition);
+        //std::cout << metadata.getMessage().getDescription() << " Sample position: " << metadata.samplePosition << std::endl;
     }
-         
+    
+    
+
+ 
     //std::cout << generatedMessages.getNumEvents()<< std::endl;
     // Erase past messages
     generatedMessages.clear(0, (juce::int32) (position_info.timeInSeconds * sample_rate) );
+    
+
+    
     //std::cout << " Generated messages buffer size: " << generatedMessages.getNumEvents() << std::endl;
         
 }
@@ -304,10 +346,15 @@ void MidiMarkovProcessor::addMidi(juce::MidiMessage msg, int sampleOffset)
 
 void MidiMarkovProcessor::setOffset(double ofs){
     offset = ofs;
-    conductor.setTimeOffset((int)ofs);
+    conductor.setTimeOffset((int)offset);
     
 }
 void MidiMarkovProcessor::setDuration(double dur){
     duration = dur;
+        conductor.setDuration(duration);
     
+}
+
+void MidiMarkovProcessor::markov_on_off(bool state){
+    markov = state;
 }
