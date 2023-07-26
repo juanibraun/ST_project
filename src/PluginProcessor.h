@@ -63,11 +63,14 @@ public:
     void addMidi(juce::MidiMessage msg, int sampleOffset);
     
     void setOffset(double ofs);
+    double getOffset();
+    
     void setDuration(double dur);
+    double getDuration();
     
     void markov_on_off(bool state);
+    bool getMarkov_on_off();
     
-
 private:
 
     MarkovManager markovModel_notes;
@@ -82,6 +85,8 @@ private:
     double sample_rate;
     double offset;
     double duration;
+    
+    juce::int64 lastSample;
 
     
     

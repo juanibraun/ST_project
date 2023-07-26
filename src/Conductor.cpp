@@ -67,9 +67,9 @@ std::string Conductor::generateEvent(){
     
 }
 
-splitted_event Conductor::generateSplittedEvent(){
-    note current_note = played_notes.front();
-    played_notes.pop_front();
+splitted_event Conductor::splitEvent(std::string event){
+    
+    note current_note = readEvent(event);
     
     splitted_event out;
     out.note = std::to_string(current_note.note) + "," + std::to_string(current_note.velocity) + "," + std::to_string(0) + "," + std::to_string(current_note.duration);
@@ -114,16 +114,8 @@ bool Conductor::availableEvents(){
 }
 
 void Conductor::clearNotes(){
-    note n;
-    n.duration = 0;
-    n.start = 0;
-    n.note = 0;
-    n.velocity = 0;
-    
-    played_notes.clear();
-
+        played_notes.clear();
 }
-
 
 int Conductor::getTimeOffset(){
     return time_offset;

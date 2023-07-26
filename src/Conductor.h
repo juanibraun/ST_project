@@ -40,7 +40,7 @@ public:
     
     std::string generateEvent();
     
-    splitted_event generateSplittedEvent();
+    splitted_event splitEvent(std::string event);
     
     note readEvent(std::string &event);
     

@@ -27,7 +27,7 @@ audioProcessor (p)
     
     addAndMakeVisible(offset_slider);
     offset_slider.setRange(0,12,1);
-    offset_slider.setValue(4);
+    offset_slider.setValue(audioProcessor.getOffset());
     offset_slider.setTextValueSuffix (" quarters");
     offset_slider.addListener(this);
     addAndMakeVisible (offset_label);
@@ -36,7 +36,7 @@ audioProcessor (p)
     
     addAndMakeVisible(duration_slider);
     duration_slider.setRange(0,2,0.125);
-    duration_slider.setValue(1);
+    duration_slider.setValue(audioProcessor.getDuration());
     duration_slider.setTextValueSuffix (" times");
     duration_slider.addListener(this);
     addAndMakeVisible (duration_label);
@@ -45,9 +45,10 @@ audioProcessor (p)
     
     addAndMakeVisible(markov_on_off);
     markov_on_off.setClickingTogglesState(true);
+    markov_on_off.setToggleState(audioProcessor.getMarkov_on_off(), juce::dontSendNotification);
+    updateToggleState(&markov_on_off);
     markov_on_off.onClick = [this] { updateToggleState(&markov_on_off);};
     addAndMakeVisible(markov_on_off_label);
-    markov_on_off_label.setText ("Markov OFF", juce::dontSendNotification);
     markov_on_off_label.attachToComponent (&markov_on_off, false);
 
 }
