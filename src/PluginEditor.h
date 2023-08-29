@@ -22,9 +22,7 @@ class MidiMarkovEditor  :  public juce::AudioProcessorEditor,
                           // listen to buttons
                           public juce::Button::Listener, 
                           // listen to sliders
-                          public juce::Slider::Listener, 
-                          // listen to piano keyboard widget
-                          private juce::MidiKeyboardState::Listener
+                          public juce::Slider::Listener
 
 {
 public:
@@ -38,19 +36,11 @@ public:
     void sliderValueChanged (juce::Slider *slider) override;
     void buttonClicked(juce::Button* btn) override;
     // from MidiKeyboardState
-    void handleNoteOn(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber, float
- velocity) override; 
-     // from MidiKeyboardState
-    void handleNoteOff(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber, float velocity) override;
     void updateToggleState (juce::Button* button);
     
 
 
 private:
-
-    // needed for the mini piano keyboard
-    juce::MidiKeyboardState kbdState;
-    juce::MidiKeyboardComponent miniPianoKbd;
     
     juce::Image background;
     juce::Slider offset_slider;

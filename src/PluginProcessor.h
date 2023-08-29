@@ -59,8 +59,6 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-    /** add some midi to be played at the sent sample offset*/
-    void addMidi(juce::MidiMessage msg, int sampleOffset);
     
     void setOffset(double ofs);
     double getOffset();
@@ -76,8 +74,7 @@ private:
     MarkovManager markovModel_notes;
     MarkovManager markovModel_triggers;
     Conductor conductor;
-    /** stores messages added from the addMidi function*/
-    juce::MidiBuffer midiToProcess;
+
     
     juce::MidiBuffer generatedMessages;
     

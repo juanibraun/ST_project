@@ -11,19 +11,13 @@
 
 //==============================================================================
 MidiMarkovEditor::MidiMarkovEditor (MidiMarkovProcessor& p)
-: AudioProcessorEditor (&p), miniPianoKbd{kbdState, juce::MidiKeyboardComponent::horizontalKeyboard},
+: AudioProcessorEditor (&p),
 audioProcessor (p)
 
-{    
-
-
+{
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (700, 450);
-
-    // listen to the mini piano
-    kbdState.addListener(this);  
-    addAndMakeVisible(miniPianoKbd);
     
     addAndMakeVisible(offset_slider);
     offset_slider.setRange(0,12,1);
@@ -84,7 +78,6 @@ void MidiMarkovEditor::resized()
 
     markov_on_off.setBounds(btnLeft/2, rowHeight/2, 2*btnLeft, 20);
     
-    miniPianoKbd.setBounds(0,getHeight()-rowHeight, getWidth(), rowHeight);
     
 }
 
@@ -104,20 +97,6 @@ void MidiMarkovEditor::resized()
 void MidiMarkovEditor::buttonClicked(juce::Button* btn)
 {
 }
-
-void MidiMarkovEditor::handleNoteOn(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber, float velocity)
-{
-    juce::MidiMessage msg1 = juce::MidiMessage::noteOn(midiChannel, midiNoteNumber, velocity);
-    audioProcessor.addMidi(msg1, 0);
-    
-}
-
-void MidiMarkovEditor::handleNoteOff(juce::MidiKeyboardState *source, int midiChannel, int midiNoteNumber, float velocity)
-{
-    juce::MidiMessage msg2 = juce::MidiMessage::noteOff(midiChannel, midiNoteNumber, velocity);
-    audioProcessor.addMidi(msg2, 0); 
-}
-
 
 void MidiMarkovEditor::updateToggleState (juce::Button* button){
     audioProcessor.markov_on_off(button->getToggleState());

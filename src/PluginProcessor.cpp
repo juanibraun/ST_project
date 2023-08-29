@@ -147,18 +147,9 @@ bool MidiMarkovProcessor::isBusesLayoutSupported (const BusesLayout& layouts) co
 void MidiMarkovProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     ////////////
-    // deal with MIDI
-    
-    // transfer any pending notes into the midi messages and
-    // clear pending - these messages come from the addMidi function
-    // which the UI might call to send notes from the piano widget
-    
+    // deal with MIDI    
     auto numSamples = buffer.getNumSamples();
-    
-    if (midiToProcess.getNumEvents() > 0){
-        midiMessages.addEvents(midiToProcess, midiToProcess.getFirstEventTime(), midiToProcess.getLastEventTime()+1, 0);
-        midiToProcess.clear();
-    }
+
     
     //Get position in the host
     juce::AudioPlayHead::CurrentPositionInfo position_info;
@@ -182,7 +173,9 @@ void MidiMarkovProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     
     
     if (!position_info.isPlaying){
-        midiMessages.addEvent(juce::MidiMessage::allNotesOff(1),midiMessages    .getLastEventTime());
+        //midiMessages.addEvent(juce::MidiMessage::allNotesOff(1),midiMessages    .getLastEventTime());
+        conductor.clearNotes();
+        markovModel_notes.getModelAsString();
     }
     
     midiMessages.clear(); // Clear the midi buffer bc already copied input notes to conductor
@@ -241,18 +234,11 @@ void MidiMarkovProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         auto message = metadata.getMessage();
         midiMessages.addEvent(message,metadata.samplePosition);
         lastSample = metadata.samplePosition;
-        std::cout << metadata.getMessage().getDescription() << " Sample position: " << metadata.samplePosition << std::endl;
+        //std::cout << metadata.getMessage().getDescription() << " Sample position: " << metadata.samplePosition << std::endl;
     }
-    
-    
-
- 
-    //std::cout << generatedMessages.getNumEvents()<< std::endl;
     
     // Erase past messages
     generatedMessages.clear(midiMessages.getFirstEventTime(),midiMessages.getNumEvents());
-    
-    //std::cout << generatedMessages.getNumEvents()<< std::endl;
         
 }
 
@@ -287,12 +273,6 @@ void MidiMarkovProcessor::setStateInformation (const void* data, int sizeInBytes
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new MidiMarkovProcessor();
-}
-
-
-void MidiMarkovProcessor::addMidi(juce::MidiMessage msg, int sampleOffset)
-{
-    midiToProcess.addEvent(msg, sampleOffset);
 }
 
 
